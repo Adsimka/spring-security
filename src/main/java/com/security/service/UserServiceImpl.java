@@ -9,12 +9,14 @@ import com.security.model.dto.ReadUserDto;
 import com.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -23,8 +25,8 @@ public class UserServiceImpl implements UserService {
     private final CreateUserMapper createUserMapper;
     private final ReadUserMapper readUserMapper;
 
-
     @Override
+    @Transactional
     public ReadUserDto create(CreateUserDto createUserDto) {
         return Optional.of(createUserDto)
                 .map(createUserMapper::convert)
@@ -47,6 +49,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Optional<ReadUserDto> update(Long id,
                                         EditUserDto editUserDto) {
         return userRepository.findById(id)
@@ -59,6 +62,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public boolean delete(Long id) {
         return userRepository.findById(id)
                 .map(user -> {
