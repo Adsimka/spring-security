@@ -21,7 +21,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping("/registration")
     ResponseEntity<ReadUserDto> create(CreateUserDto createUserDto) {
         var user = userService.create(createUserDto);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
