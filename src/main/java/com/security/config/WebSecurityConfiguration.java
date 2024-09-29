@@ -27,6 +27,7 @@ public class WebSecurityConfiguration {
     SecurityFilterChain filterChain(HttpSecurity http) {
         return http
                 .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
+                .oauth2Login(Customizer.withDefaults())
                 .authorizeHttpRequests(
                         urlConfig -> urlConfig
                         .requestMatchers(
