@@ -4,13 +4,20 @@ import lombok.SneakyThrows;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 @Configuration
 public class WebSecurityConfiguration {
@@ -18,7 +25,8 @@ public class WebSecurityConfiguration {
     @SneakyThrows
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) {
-        http
+        return http
+                .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
                 .authorizeHttpRequests(
                         urlConfig -> urlConfig
                         .requestMatchers(
@@ -33,8 +41,28 @@ public class WebSecurityConfiguration {
                         .logoutSuccessUrl("/login")
                         .deleteCookies("JSESSIONID"))
                 .formLogin(form -> form.successForwardUrl("/users"))
-                .csrf(AbstractHttpConfigurer::disable);
-        return http.build();
+                .csrf(AbstractHttpConfigurer::disable)
+                .build();
+    }
+
+    @Bean
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        var converter = new JwtAuthenticationConverter();
+        var jwtGrantedAuthoritiesConverter = new JwtAuthenticationConverter();
+
+        converter.setPrincipalClaimName("preferred_username");
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            var authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
+            var roles = jwt.getClaimAsStringList("spring_security_roles");
+            return Stream.concat(authorities.getAuthorities().stream(),
+                    roles.stream()
+                            .filter(role -> role.startsWith("ROLE_"))
+                            .map(SimpleGrantedAuthority::new)
+                            .map(GrantedAuthority.class::cast))
+                    .toList();
+        });
+
+        return converter;
     }
 
     @SneakyThrows

@@ -16,3 +16,8 @@ spring:
         hbm2ddl:
           auto: validate
     open-in-view: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/security
