@@ -13,6 +13,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -55,6 +60,7 @@ public class WebSecurityConfiguration {
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             var authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
             var roles = jwt.getClaimAsStringList("spring_security_roles");
+
             return Stream.concat(authorities.getAuthorities().stream(),
                     roles.stream()
                             .filter(role -> role.startsWith("ROLE_"))
@@ -62,8 +68,25 @@ public class WebSecurityConfiguration {
                             .map(GrantedAuthority.class::cast))
                     .toList();
         });
-
         return converter;
+    }
+
+    @Bean
+    public OAuth2UserService<OidcUserRequest, OidcUser> oAuth2UserService() {
+        var oidcUserService = new OidcUserService();
+
+        return userRequest -> {
+            var oidcUser = oidcUserService.loadUser(userRequest);
+            var roles = oidcUser.getClaimAsStringList("spring_security_roles");
+            var authorities = Stream.concat(oidcUser.getAuthorities().stream(),
+                            roles.stream()
+                                    .filter(role -> role.startsWith("ROLE_"))
+                                    .map(SimpleGrantedAuthority::new)
+                                    .map(GrantedAuthority.class::cast))
+                    .toList();
+
+            return new DefaultOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
+        };
     }
 
     @SneakyThrows
