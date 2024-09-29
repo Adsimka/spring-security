@@ -5,6 +5,6 @@ import java.time.LocalDate;
 public record ReadUserDto(
         String firstname,
         String lastname,
-        LocalDate birthDate,
+        LocalDate birthdate,
         String username
 ) {}

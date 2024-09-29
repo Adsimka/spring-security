@@ -3,6 +3,7 @@ package com.security.service;
 import com.security.mapper.CreateUserMapper;
 import com.security.mapper.EditUserMapper;
 import com.security.mapper.ReadUserMapper;
+import com.security.model.Role;
 import com.security.model.dto.CreateUserDto;
 import com.security.model.dto.EditUserDto;
 import com.security.model.dto.ReadUserDto;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,8 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static com.security.model.Role.ROLE_USER;
 
 @Service
 @RequiredArgsConstructor
@@ -31,13 +35,18 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final CreateUserMapper createUserMapper;
     private final ReadUserMapper readUserMapper;
 
+    private final PasswordEncoder encoder;
+
     @Override
     @Transactional
     public ReadUserDto create(CreateUserDto createUserDto) {
-        CreateUserDto dto = new CreateUserDto("Arseniy", "Minnegulov", LocalDate.of(2002, 3, 24), "sahalysyk02@mail.ru", "1234");
-
-        return Optional.of(dto)
+        return Optional.of(createUserDto)
                 .map(createUserMapper::convert)
+                .map(user -> {
+                    user.setPassword(encoder.encode(user.getPassword()));
+                    user.setRole(ROLE_USER);
+                    return user;
+                })
                 .map(userRepository::saveAndFlush)
                 .map(readUserMapper::convert)
                 .orElseThrow();

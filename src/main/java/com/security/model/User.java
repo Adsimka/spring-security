@@ -18,15 +18,21 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String firstname;
 
+    @Column(nullable = false)
     private String lastname;
 
-    private LocalDate birthDate;
+    @Column(nullable = false)
+    private LocalDate birthdate;
 
+    @Column(unique = true)
     private String username;
 
+    @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     private Role role;
 }

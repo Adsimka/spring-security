@@ -22,7 +22,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/registration")
-    ResponseEntity<ReadUserDto> create(CreateUserDto createUserDto) {
+    ResponseEntity<ReadUserDto> create(@RequestBody CreateUserDto createUserDto) {
         var user = userService.create(createUserDto);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
@@ -40,7 +40,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<ReadUserDto> update(@PathVariable("id") Long id, EditUserDto editUserDto) {
+    ResponseEntity<ReadUserDto> update(@PathVariable("id") Long id, @RequestBody EditUserDto editUserDto) {
         return new ResponseEntity<>(
                 userService.update(id, editUserDto)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)),
